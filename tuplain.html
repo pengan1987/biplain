@@ -216,8 +216,8 @@ function checkTime() {
     var delta = (Date.now() - transport.startTime)/1000.0;
     console.log(delta);
     if (delta > args.lengthInSeconds) {
-        players["audio"].stopVideo();
-        players["video"].stopVideo();
+        players["audio"].pause();
+        players["video"].pause();
         clearTimeout(args.timer);
     }
 }
