@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-    <title>tuplain</title>
+    <title>biplain</title>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
     </head>
     <style>
@@ -101,7 +101,8 @@ var args = {
         width : "1280",
         height : "720",
         volume : 0,
-        rate : 1.0
+        rate : 1.0,
+        stream: ""
     },
     "audio" : {
         videoid : "",
@@ -110,7 +111,8 @@ var args = {
         width: "400",
         height: "300",
         volume : 100,
-        rate : 1.0
+        rate : 1.0,
+        stream: ""
     },
     "lengthInSeconds" : 0.0
 };
@@ -169,10 +171,30 @@ console.log("audio", args["audio"]);
 console.log("length", args.lengthInSeconds);
 
 // Load the IFrame Player API code asynchronously.
-var tag = document.createElement('script');
-tag.src = "https://www.youtube.com/player_api";
-var firstScriptTag = document.getElementsByTagName('script')[0];
-firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+//var tag = document.createElement('script');
+//tag.src = "https://www.youtube.com/player_api";
+//var firstScriptTag = document.getElementsByTagName('script')[0];
+//firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+$.ajax({
+    dataType: "json",
+    url: "http://andyzhk.azurewebsites.net/bili.php?bvid=" + videoId,
+   
+    success: function(json){
+        args["video"].stream = json['video'];
+        onBilibiliStreamResolved();
+    }
+});
+
+$.ajax({
+    dataType: "json",
+    url: "http://andyzhk.azurewebsites.net/bili.php?bvid=" + audioId,
+  
+    success: function(json){
+        args["audio"].stream = json['video'];
+        onBilibiliStreamResolved();
+    }
+});
 
 var playClicked = false;
 
@@ -223,7 +245,7 @@ function playVideos() {
     }
 
     for (var name of Object.keys(players)) {
-        players[name].playVideo();
+        players[name].play();
     }
 
     transport.startTime = Date.now();
@@ -235,38 +257,52 @@ function playVideos() {
     }
 }
 
-function onYouTubePlayerAPIReady() {
+function onBilibiliStreamResolved() {
+    if (!args["audio"].stream || !args["video"].stream){
+        console.log("one video loaded, another not");
+        console.log(args);
+        return;
+    }
+
     for (var name of Object.keys(players)) {
         if (!players.hasOwnProperty(name)) { continue; }
 
         console.log(args[name]);
         var config = args[name];
-        players[name] = new YT.Player(config["elementid"], {
-          width: config["width"],
-          height: config["height"],
-          videoId: config["videoid"],
-          playerVars: {
-              /*'autoplay': 1,*/
-              'enablejsapi' : 1,
-              'modestbranding' : 1,
-              'start' : config["start"]
-          },
-          events : {
-              onReady : function(event) {
-                  var vid = event.target;
-                  vid.setVolume(args[vid.name].volume);
-                  vid.setPlaybackRate(args[vid.name].rate);
-                  state[vid.name].loaded = true
 
-                  if (canPlay()) {
-                      setStatus("Videos loaded")
-                      if (shouldPlay()) {
-                          playVideos();
-                      }
-                  }
-              }
-          }
-        });
+
+        var currentPlayer = document.createElement("video");
+        currentPlayer.id = config["videoid"];
+        currentPlayer.width = config["width"];
+        currentPlayer.height = config["height"];
+        currentPlayer.src = config["stream"]
+        currentPlayer.currentTime = config["start"]
+        currentPlayer.controls = true;
+
+        //After chrome 66, can't autoplay if player not muted
+        var check = document.getElementById("autoplay");
+        if (check.checked) {
+            currentPlayer.muted = "muted";
+        }
+
+        $("#" + config["elementid"]).empty().append(currentPlayer);
+
+        currentPlayer.oncanplaythrough = function (event) {
+            var vid = event.target;
+            vid.volume = (args[vid.name].volume / 100);
+            vid.playbackRate = (args[vid.name].rate);
+          
+            state[vid.name].loaded = true
+
+            if (canPlay()) {
+                setStatus("Videos loaded")
+                if (shouldPlay()) {
+                    playVideos();
+                }
+            }
+        }
+        players[name] = currentPlayer;
+
 
         // Attach the player name to the YT player element so we can easily access
         // them from the event handler.
