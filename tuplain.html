@@ -2,7 +2,7 @@
 <html lang="en">
     <head>
     <title>biplain</title>
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
     </head>
     <style>
         #title {
@@ -70,7 +70,7 @@ Loading players...
  <label><input type="checkbox" id="autoplay">Enable autoplay</label>
 </div>
 
-<span>For help see the <a target="_blank" href="help.html">User's Guide</a></span>
+<span>For help see the <a target="_blank" href="https://github.com/pengan1987/biplain">User's Guide</a></span>
 </bottom>
 
 <script>
@@ -170,15 +170,9 @@ console.log("video", args["video"]);
 console.log("audio", args["audio"]);
 console.log("length", args.lengthInSeconds);
 
-// Load the IFrame Player API code asynchronously.
-//var tag = document.createElement('script');
-//tag.src = "https://www.youtube.com/player_api";
-//var firstScriptTag = document.getElementsByTagName('script')[0];
-//firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
 $.ajax({
     dataType: "json",
-    url: "http://andyzhk.azurewebsites.net/bili.php?bvid=" + videoId,
+    url: "bilibili_api.php?bvid=" + videoId,
    
     success: function(json){
         args["video"].stream = json['video'];
@@ -188,7 +182,7 @@ $.ajax({
 
 $.ajax({
     dataType: "json",
-    url: "http://andyzhk.azurewebsites.net/bili.php?bvid=" + audioId,
+    url: "bilibili_api.php?bvid=" + audioId,
   
     success: function(json){
         args["audio"].stream = json['video'];
@@ -259,8 +253,6 @@ function playVideos() {
 
 function onBilibiliStreamResolved() {
     if (!args["audio"].stream || !args["video"].stream){
-        console.log("one video loaded, another not");
-        console.log(args);
         return;
     }
 
